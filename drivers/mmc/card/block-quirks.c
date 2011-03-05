@@ -15,6 +15,23 @@
 #include "queue.h"
 #include "blk.h"
 
+#ifdef CONFIG_MMC_BLOCK_QUIRK_TOSHIBA_32NM
+static int toshiba_32nm_probe(struct mmc_blk_data *md, struct mmc_card *card)
+{
+	printk(KERN_INFO "Applying Toshiba 32nm workarounds\n");
+
+	/* Page size 8K, this card doesn't like unaligned writes
+	   across 8K boundary. */
+	md->write_align_size = 8192;
+
+	/* Doing the alignment for accesses > 12K seems to
+	   result in decreased perf. */
+	md->write_align_limit = 12288;
+	return 0;
+}
+#endif /* CONFIG_MMC_BLOCK_QUIRK_TOSHIBA_32NM */
+
+
 /*
    Caveat: Because this list is just looked up with a linear
    search, take care that either overlapping revision ranges
@@ -22,6 +39,10 @@
    a given revision has the desired effect.
 */
 struct mmc_blk_quirk mmc_blk_quirks[] = {
+#ifdef CONFIG_MMC_BLOCK_QUIRK_TOSHIBA_32NM
+        MMC_BLK_QUIRK("MMC16G", 0x11, 0x0, toshiba_32nm_probe),
+        MMC_BLK_QUIRK("MMC32G", 0x11, 0x0100, toshiba_32nm_probe),
+#endif /* CONFIG_MMC_BLOCK_QUIRK_TOSHIBA_32NM */
 };
 
 static int mmc_blk_quirk_cmp(const struct mmc_blk_quirk *quirk,
@@ -49,3 +70,4 @@ struct mmc_blk_quirk *mmc_blk_quirk_find(struct mmc_card *card)
 
 	return NULL;
 }
+
