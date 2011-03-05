@@ -41,6 +41,7 @@
 #include <asm/uaccess.h>
 
 #include "queue.h"
+#include "blk.h"
 
 MODULE_ALIAS("mmc:block");
 #ifdef MODULE_PARAM_PREFIX
@@ -72,20 +73,6 @@ static int max_devices;
 
 /* 256 minors, so at most 256 separate devices */
 static DECLARE_BITMAP(dev_use, 256);
-
-/*
- * There is one mmc_blk_data per slot.
- */
-struct mmc_blk_data {
-	spinlock_t	lock;
-	struct gendisk	*disk;
-	struct mmc_queue queue;
-
-	unsigned int	usage;
-	unsigned int	read_only;
-	unsigned int	write_align_size;
-	unsigned int	write_align_limit;
-};
 
 static DEFINE_MUTEX(open_lock);
 
@@ -791,6 +778,7 @@ static const struct mmc_fixup blk_fixups[] =
 static int mmc_blk_probe(struct mmc_card *card)
 {
 	struct mmc_blk_data *md;
+	struct mmc_blk_quirk *quirk;
 	int err;
 	char cap_str[10];
 
@@ -805,6 +793,12 @@ static int mmc_blk_probe(struct mmc_card *card)
 		return PTR_ERR(md);
 
 	err = mmc_blk_set_blksize(md, card);
+	if (err)
+		goto out;
+
+	quirk = mmc_blk_quirk_find(card);
+	if (quirk && quirk->probe)
+		err = quirk->probe(md, card);
 	if (err)
 		goto out;
 

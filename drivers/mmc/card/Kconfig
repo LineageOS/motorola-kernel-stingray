@@ -32,6 +32,13 @@ config MMC_BLOCK_MINORS
 
 	  If unsure, say 8 here.
 
+config MMC_BLOCK_QUIRKS
+       tristate "MMC block device quirks"
+       depends on MMC_BLOCK
+       default y
+       help
+         Say Y here to enable various workarounds for known cards.
+
 config MMC_BLOCK_BOUNCE
 	bool "Use bounce buffer for simple hosts"
 	depends on MMC_BLOCK
