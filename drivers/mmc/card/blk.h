@@ -18,7 +18,7 @@ struct mmc_blk_data;
 		     card->cid.year,  \
 		     card->cid.month)
 
-#define MMC_BLK_QUIRK_VERSION(_name, _manfid, _oemid, _rev_start, _rev_end, _probe) \
+#define MMC_BLK_QUIRK_VERSION(_name, _manfid, _oemid, _rev_start, _rev_end, _probe, _adjust) \
 	{							\
 		.name = (_name),				\
 		.manfid = (_manfid),				\
@@ -26,10 +26,11 @@ struct mmc_blk_data;
 		.rev_start = (_rev_start),			\
 		.rev_end = (_rev_end),				\
 		.probe = (_probe),				\
+		.adjust = (_adjust),				\
 	}
 
-#define MMC_BLK_QUIRK(_name, _manfid, _oemid, _probe) \
-	MMC_BLK_QUIRK_VERSION(_name, _manfid, _oemid, 0, -1ull, _probe)
+#define MMC_BLK_QUIRK(_name, _manfid, _oemid, _probe, _adjust)	\
+	MMC_BLK_QUIRK_VERSION(_name, _manfid, _oemid, 0, -1ull, _probe, _adjust)
 
 extern struct mmc_blk_quirk *mmc_blk_quirk_find(struct mmc_card *card);
 #else
@@ -51,6 +52,7 @@ struct mmc_blk_quirk {
 	unsigned int manfid;
 	unsigned short oemid;
 	int (*probe)(struct mmc_blk_data *, struct mmc_card *);
+	void (*adjust)(struct mmc_queue *, struct request *, struct mmc_request *);
 };
 
 /*
@@ -65,6 +67,7 @@ struct mmc_blk_data {
 	unsigned int	read_only;
 	unsigned int	write_align_size;
 	unsigned int	write_align_limit;
+	struct mmc_blk_quirk *quirk;
 };
 
 #endif

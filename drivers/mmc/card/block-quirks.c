@@ -31,7 +31,6 @@ static int toshiba_32nm_probe(struct mmc_blk_data *md, struct mmc_card *card)
 }
 #endif /* CONFIG_MMC_BLOCK_QUIRK_TOSHIBA_32NM */
 
-
 /*
    Caveat: Because this list is just looked up with a linear
    search, take care that either overlapping revision ranges
@@ -40,8 +39,8 @@ static int toshiba_32nm_probe(struct mmc_blk_data *md, struct mmc_card *card)
 */
 struct mmc_blk_quirk mmc_blk_quirks[] = {
 #ifdef CONFIG_MMC_BLOCK_QUIRK_TOSHIBA_32NM
-        MMC_BLK_QUIRK("MMC16G", 0x11, 0x0, toshiba_32nm_probe),
-        MMC_BLK_QUIRK("MMC32G", 0x11, 0x0100, toshiba_32nm_probe),
+        MMC_BLK_QUIRK("MMC16G", 0x11, 0x0, toshiba_32nm_probe, NULL),
+        MMC_BLK_QUIRK("MMC32G", 0x11, 0x0100, toshiba_32nm_probe, NULL),
 #endif /* CONFIG_MMC_BLOCK_QUIRK_TOSHIBA_32NM */
 };
 

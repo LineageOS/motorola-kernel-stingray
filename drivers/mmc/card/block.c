@@ -462,6 +462,11 @@ static int mmc_blk_issue_rw_rq(struct mmc_queue *mq, struct request *req)
 		brq.data.sg = mq->sg;
 		brq.data.sg_len = mmc_queue_map_sg(mq);
 
+#ifdef CONFIG_MMC_BLOCK_QUIRKS
+	if (md->quirk && md->quirk->adjust)
+		md->quirk->adjust(mq, req, &brq.mrq);
+#endif /* CONFIG_MMC_BLOCK_QUIRKS */
+
 		/*
 		 * Adjust the sg list so it is the same size as the
 		 * request.
@@ -778,7 +783,6 @@ static const struct mmc_fixup blk_fixups[] =
 static int mmc_blk_probe(struct mmc_card *card)
 {
 	struct mmc_blk_data *md;
-	struct mmc_blk_quirk *quirk;
 	int err;
 	char cap_str[10];
 
@@ -796,9 +800,9 @@ static int mmc_blk_probe(struct mmc_card *card)
 	if (err)
 		goto out;
 
-	quirk = mmc_blk_quirk_find(card);
-	if (quirk && quirk->probe)
-		err = quirk->probe(md, card);
+	md->quirk = mmc_blk_quirk_find(card);
+	if (md->quirk && md->quirk->probe)
+		err = md->quirk->probe(md, card);
 	if (err)
 		goto out;
 
