@@ -9,8 +9,10 @@
  *
  */
 #include <linux/kernel.h>
+#include <linux/blkdev.h>
 #include <linux/semaphore.h>
 #include <linux/mmc/card.h>
+#include <linux/mmc/mmc.h>
 
 #include "queue.h"
 #include "blk.h"
@@ -19,6 +21,11 @@
 static int toshiba_32nm_probe(struct mmc_blk_data *md, struct mmc_card *card)
 {
 	printk(KERN_INFO "Applying Toshiba 32nm workarounds\n");
+#ifdef CONFIG_MMC_BLOCK_QUIRK_TOSHIBA_32NM_REL
+	printk(KERN_INFO "Toshiba 32nm reliability splits over 0x%x-0x%x blocks\n",
+	       CONFIG_MMC_BLOCK_QUIRK_TOSHIBA_32NM_REL_L,
+	       CONFIG_MMC_BLOCK_QUIRK_TOSHIBA_32NM_REL_U);
+#endif
 
 	/* Page size 8K, this card doesn't like unaligned writes
 	   across 8K boundary. */
@@ -29,6 +36,43 @@ static int toshiba_32nm_probe(struct mmc_blk_data *md, struct mmc_card *card)
 	md->write_align_limit = 12288;
 	return 0;
 }
+
+#ifdef CONFIG_MMC_BLOCK_QUIRK_TOSHIBA_32NM_REL
+static void toshiba_32nm_adjust(struct mmc_queue *mq,
+				struct request *req,
+				struct mmc_request *mrq)
+{
+
+	int err;
+	struct mmc_command cmd;
+	struct mmc_blk_data *md = mq->data;
+	struct mmc_card *card = md->queue.card;
+
+	if (rq_data_dir(req) != WRITE)
+		return;
+
+	if (blk_rq_sectors(req) > CONFIG_MMC_BLOCK_QUIRK_TOSHIBA_32NM_REL_U ||
+	    blk_rq_sectors(req) < CONFIG_MMC_BLOCK_QUIRK_TOSHIBA_32NM_REL_L)
+		return;
+
+	/* 8K chunks */
+	if (mrq->data->blocks > 16)
+		mrq->data->blocks = 16;
+
+	/*
+	  We know what the valid values for this card are,
+	  no need to check EXT_CSD_REL_WR_SEC_C.
+	 */
+	cmd.opcode = MMC_SET_BLOCK_COUNT | (1 << 31);
+	cmd.arg = mrq->data->blocks;
+	cmd.flags = MMC_RSP_R1 | MMC_CMD_AC;
+	err = mmc_wait_for_cmd(card->host, &cmd, 0);
+	if (!err)
+		mrq->stop = NULL;
+}
+#else
+#define toshiba_32nm_adjust NULL
+#endif /* CONFIG_MMC_BLOCK_QUIRK_TOSHIBA_32NM_REL */
 #endif /* CONFIG_MMC_BLOCK_QUIRK_TOSHIBA_32NM */
 
 /*
@@ -39,8 +83,10 @@ static int toshiba_32nm_probe(struct mmc_blk_data *md, struct mmc_card *card)
 */
 struct mmc_blk_quirk mmc_blk_quirks[] = {
 #ifdef CONFIG_MMC_BLOCK_QUIRK_TOSHIBA_32NM
-        MMC_BLK_QUIRK("MMC16G", 0x11, 0x0, toshiba_32nm_probe, NULL),
-        MMC_BLK_QUIRK("MMC32G", 0x11, 0x0100, toshiba_32nm_probe, NULL),
+        MMC_BLK_QUIRK("MMC16G", 0x11, 0x0,
+		      toshiba_32nm_probe, toshiba_32nm_adjust),
+        MMC_BLK_QUIRK("MMC32G", 0x11, 0x0100,
+		      toshiba_32nm_probe, toshiba_32nm_adjust),
 #endif /* CONFIG_MMC_BLOCK_QUIRK_TOSHIBA_32NM */
 };
 
