@@ -37,6 +37,7 @@
 #include <linux/seq_file.h>
 #include <linux/uaccess.h>
 #include <linux/syscore_ops.h>
+#include <linux/cpu.h>
 
 #include <asm/cacheflush.h>
 #include <asm/cpu_pm.h>
@@ -159,6 +160,9 @@ static enum tegra_suspend_mode current_suspend_mode = TEGRA_SUSPEND_NONE;
 
 static DEFINE_SPINLOCK(tegra_lp2_lock);
 static cpumask_t tegra_in_lp2;
+static cpumask_t tegra_lp2_online;
+
+static bool disallow_lp2;
 
 unsigned long tegra_cpu_power_good_time(void)
 {
@@ -353,7 +357,7 @@ int tegra_reset_other_cpus(int cpu)
 	int i;
 	int abort = -1;
 
-	for_each_online_cpu(i) {
+	for_each_cpu_mask(i, tegra_lp2_online) {
 		if (i != cpu) {
 			if (tegra_reset_sleeping_cpu(i)) {
 				abort = i;
@@ -363,7 +367,7 @@ int tegra_reset_other_cpus(int cpu)
 	}
 
 	if (abort >= 0) {
-		for_each_online_cpu(i) {
+		for_each_cpu_mask(i, tegra_lp2_online) {
 			if (i != cpu && i < abort)
 				tegra_wake_reset_cpu(i);
 		}
@@ -415,7 +419,7 @@ void tegra_idle_lp2_last(void)
 	restore_cpu_complex();
 	cpu_complex_pm_exit();
 
-	for_each_online_cpu(i)
+	for_each_cpu_mask(i, tegra_lp2_online)
 		if (i != cpu)
 			tegra_wake_reset_cpu(i);
 }
@@ -427,8 +431,14 @@ void tegra_idle_lp2(void)
 
 	spin_lock(&tegra_lp2_lock);
 
+	if (disallow_lp2) {
+		spin_unlock(&tegra_lp2_lock);
+		tegra_cpu_wfi();
+		return;
+	}
+
 	cpumask_set_cpu(cpu, &tegra_in_lp2);
-	if (cpumask_equal(&tegra_in_lp2, cpu_online_mask))
+	if (cpumask_equal(&tegra_in_lp2, &tegra_lp2_online))
 		last_cpu = true;
 	else
 		tegra_cpu_set_resettable_soon();
@@ -461,6 +471,27 @@ void tegra_idle_lp2(void)
 
 	spin_unlock(&tegra_lp2_lock);
 }
+
+int tegra_idle_lp2_cpu_notify(struct notifier_block *nb, unsigned long action,
+	void *hcpu)
+{
+	int cpu = (unsigned long)hcpu;
+
+	switch (action & ~CPU_TASKS_FROZEN) {
+	case CPU_DEAD:
+	case CPU_UP_CANCELED:
+		cpumask_clear_cpu(cpu, &tegra_lp2_online);
+		break;
+	case CPU_UP_PREPARE:
+		cpumask_set_cpu(cpu, &tegra_lp2_online);
+		break;
+	}
+	return NOTIFY_OK;
+}
+
+static struct notifier_block tegra_idle_lp2_cpu_notifier = {
+	.notifier_call = tegra_idle_lp2_cpu_notify,
+};
 
 static int tegra_common_suspend(void)
 {
@@ -503,11 +534,17 @@ static void tegra_common_resume(void)
 static int tegra_suspend_prepare_late(void)
 {
 	disable_irq(INT_SYS_STATS_MON);
+	spin_lock(&tegra_lp2_lock);
+	disallow_lp2 = true;
+	spin_unlock(&tegra_lp2_lock);
 	return 0;
 }
 
 static void tegra_suspend_wake(void)
 {
+	spin_lock(&tegra_lp2_lock);
+	disallow_lp2 = false;
+	spin_unlock(&tegra_lp2_lock);
 	enable_irq(INT_SYS_STATS_MON);
 }
 
@@ -702,6 +739,9 @@ void __init tegra_init_suspend(struct tegra_suspend_platform_data *plat)
 #endif
 
 	current_suspend_mode = plat->suspend_mode;
+
+	cpumask_copy(&tegra_lp2_online, cpu_online_mask);
+	register_cpu_notifier(&tegra_idle_lp2_cpu_notifier);
 }
 
 static int tegra_debug_uart_suspend(void)

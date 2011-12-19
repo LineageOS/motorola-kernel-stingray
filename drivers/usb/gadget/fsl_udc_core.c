@@ -272,6 +272,7 @@ static int dr_controller_setup(struct fsl_udc *udc)
 	tmp |= USB_MODE_CTRL_MODE_DEVICE;
 	/* Disable Setup Lockout */
 	tmp |= USB_MODE_SETUP_LOCK_OFF;
+	tmp |= USB_MODE_STREAM_DISABLE;
 	fsl_writel(tmp, &dr_regs->usbmode);
 
 #ifdef CONFIG_ARCH_TEGRA
@@ -341,6 +342,7 @@ static void dr_controller_run(struct fsl_udc *udc)
 	/* Set the controller as device mode */
 	temp = fsl_readl(&dr_regs->usbmode);
 	temp |= USB_MODE_CTRL_MODE_DEVICE;
+	temp |= USB_MODE_STREAM_DISABLE;
 	fsl_writel(temp, &dr_regs->usbmode);
 
 	spin_lock_irqsave(&udc->lock, flags);
@@ -725,12 +727,18 @@ static void fsl_queue_td(struct fsl_ep *ep, struct fsl_req *req)
 
 		if (tmp_stat)
 			goto out;
+		else {
+			if(!(dQH->next_dtd_ptr &
+			    cpu_to_le32(DTD_NEXT_TERMINATE)))
+				goto prime;
+		}
 	}
 
 	/* Write dQH next pointer and terminate bit to 0 */
 	temp = req->head->td_dma & EP_QUEUE_HEAD_NEXT_POINTER_MASK;
 	dQH->next_dtd_ptr = cpu_to_le32(temp);
 
+prime:
 	/* Clear active and halt bit */
 	temp = cpu_to_le32(~(EP_QUEUE_HEAD_STATUS_ACTIVE
 			| EP_QUEUE_HEAD_STATUS_HALT));
