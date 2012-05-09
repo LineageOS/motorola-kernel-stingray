@@ -1,0 +1,8 @@
+Change-Id: Ic290e011178be491749e07d71f4ab7edff1afb51
+Code-Review+2: Takazumi Matsumoto <tdr@taksmon.com>
+Verified+1: Takazumi Matsumoto <tdr@taksmon.com>
+Submitted-by: Takazumi Matsumoto <tdr@taksmon.com>
+Submitted-at: Wed, 09 May 2012 21:24:58 +0400
+Reviewed-on: http://review.cyanogenmod.com/15683
+Project: CyanogenMod/motorola-kernel-stingray
+Branch: refs/heads/ics
