@@ -1,0 +1,8 @@
+Change-Id: Ia1417239261bc83c46745abab6863c5106f0f078
+Code-Review+2: Takazumi Matsumoto <tdr@taksmon.com>
+Verified+1: Takazumi Matsumoto <tdr@taksmon.com>
+Submitted-by: Takazumi Matsumoto <tdr@taksmon.com>
+Submitted-at: Wed, 18 Jul 2012 21:27:01 +0400
+Reviewed-on: http://review.cyanogenmod.com/19537
+Project: CyanogenMod/motorola-kernel-stingray
+Branch: refs/heads/jellybean
