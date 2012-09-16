@@ -241,6 +241,8 @@ static int bcm4329_bluetooth_probe(struct platform_device *pdev)
 	int rc = 0;
 	int ret = 0;
 
+	bt_lpm.irq_disabled = true;
+
 	tegra_gpio_enable(BT_RESET_GPIO);
 	rc = gpio_request(BT_RESET_GPIO, "bcm4329_nreset_gpip");
 	if (unlikely(rc)) {

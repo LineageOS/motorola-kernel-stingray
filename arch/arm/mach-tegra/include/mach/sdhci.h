@@ -26,6 +26,7 @@ struct tegra_sdhci_platform_data {
 	int power_gpio;
 	int is_8bit;
 	struct mmc_platform_data mmc_data;
+	int pm_flags;
 };
 
 #endif
