@@ -140,10 +140,12 @@ u32 nvhost_syncpt_read(struct nvhost_syncpt *sp, u32 id)
 void nvhost_syncpt_cpu_incr(struct nvhost_syncpt *sp, u32 id)
 {
 	struct nvhost_master *dev = syncpt_to_dev(sp);
-	BUG_ON(!nvhost_module_powered(&dev->mod));
 	BUG_ON(!client_managed(id) && nvhost_syncpt_min_eq_max(sp, id));
-	writel(BIT(id), dev->sync_aperture + HOST1X_SYNC_SYNCPT_CPU_INCR);
-	wmb();
+	WARN_ON(!nvhost_module_powered(&dev->mod));
+	if (nvhost_module_powered(&dev->mod)) {
+		writel(BIT(id), dev->sync_aperture + HOST1X_SYNC_SYNCPT_CPU_INCR);
+		wmb();
+	}
 }
 
 /**
