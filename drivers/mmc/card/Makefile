@@ -3,6 +3,7 @@
 #
 
 obj-$(CONFIG_MMC_BLOCK)		+= mmc_block.o
+obj-$(CONFIG_MMC_BLOCK_QUIRKS)  += block-quirks.o
 mmc_block-objs			:= block.o queue.o
 obj-$(CONFIG_MMC_TEST)		+= mmc_test.o
 

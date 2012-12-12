@@ -32,6 +32,52 @@ config MMC_BLOCK_MINORS
 
 	  If unsure, say 8 here.
 
+config MMC_BLOCK_QUIRKS
+       tristate "MMC block device quirks"
+       depends on MMC_BLOCK
+       default y
+       help
+         Say Y here to enable various workarounds for known cards.
+
+config MMC_BLOCK_QUIRK_TOSHIBA_32NM
+       tristate "Toshiba MMC 32nm technology flash device quirks"
+       depends on MMC_BLOCK_QUIRKS
+       default n
+       help
+         Say Y if you have a Toshiba 32nm technology flash device,
+	 such as MMC32G or MMC16G eMMCs.
+
+config MMC_BLOCK_QUIRK_TOSHIBA_32NM_REL
+       tristate "Toshiba MMC 32nm reliability quirk"
+       depends on MMC_BLOCK_QUIRK_TOSHIBA_32NM
+       default n
+       help
+         Say Y if you want to enable the improved reliability workaround
+	 for your Toshiba 32nm parts. This will result in certain-sized
+	 writes to be split up into 8K chunks, to ensure they are placed
+	 in the smaller 8KB buffer instead of the 4MB buffer, which should
+	 reduce the number of flash write-erase cycles and improve
+	 reliability. By default accesses in the 24k-32k range are
+	 split.
+
+config MMC_BLOCK_QUIRK_TOSHIBA_32NM_REL_L
+       hex "Toshiba reliability lower bound (in blocks)"
+       depends on MMC_BLOCK_QUIRK_TOSHIBA_32NM_REL
+       default "30"
+       help
+         Accesses smaller than the lower bound will not be split.
+	 This value should be experimentally found to match load
+	 and performance characteristics.
+
+config MMC_BLOCK_QUIRK_TOSHIBA_32NM_REL_U
+       hex "Toshiba reliability upper bound (in blocks)"
+       depends on MMC_BLOCK_QUIRK_TOSHIBA_32NM_REL
+       default "40"
+       help
+         Accesses bigger than the upper bound will not be split.
+	 This value should be experimentally found to match load
+	 and performance characteristics.
+
 config MMC_BLOCK_BOUNCE
 	bool "Use bounce buffer for simple hosts"
 	depends on MMC_BLOCK

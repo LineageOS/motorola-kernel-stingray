@@ -66,7 +66,7 @@ int nvmap_ioctl_pinop(struct file *filp, bool is_pin, void __user *arg)
 		size_t bytes = op.count * sizeof(unsigned long *);
 
 		if (op.count > ARRAY_SIZE(on_stack))
-			refs = kmalloc(op.count * sizeof(*refs), GFP_KERNEL);
+			refs = kzalloc(op.count * sizeof(*refs), GFP_KERNEL);
 		else
 			refs = on_stack;
 
