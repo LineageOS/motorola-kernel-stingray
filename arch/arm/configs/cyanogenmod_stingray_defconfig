@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Linux/arm 2.6.39.4 Kernel Configuration
-# Sat Dec 15 09:29:51 2012
+# Sat Dec 22 12:40:27 2012
 #
 CONFIG_ARM=y
 CONFIG_SYS_SUPPORTS_APM_EMULATION=y
@@ -1845,6 +1845,7 @@ CONFIG_SND_PCM_OSS=y
 CONFIG_HID_SUPPORT=y
 CONFIG_HID=y
 CONFIG_HIDRAW=y
+CONFIG_UHID=y
 
 #
 # USB Input Devices
