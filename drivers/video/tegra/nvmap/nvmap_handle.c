@@ -53,9 +53,9 @@
 static inline void *altalloc(size_t len)
 {
 	if (len >= PAGELIST_VMALLOC_MIN)
-		return vmalloc(len);
+		return vzalloc(len);
 	else
-		return kmalloc(len, GFP_KERNEL);
+		return kzalloc(len, GFP_KERNEL);
 }
 
 static inline void altfree(void *ptr, size_t len)

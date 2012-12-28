@@ -358,7 +358,7 @@ static int get_ksvfifo(struct tegra_nvhdcp *nvhdcp,
 	if (num_bksv_list == 0)
 		return 0;
 
-	buf = kmalloc(buf_len, GFP_KERNEL);
+	buf = kzalloc(buf_len, GFP_KERNEL);
 	if (IS_ERR_OR_NULL(buf))
 		return -ENOMEM;
 
@@ -1104,7 +1104,7 @@ static long nvhdcp_dev_ioctl(struct file *filp,
 		return tegra_nvhdcp_set_policy(nvhdcp, arg);
 
 	case TEGRAIO_NVHDCP_READ_M:
-		pkt = kmalloc(sizeof(*pkt), GFP_KERNEL);
+		pkt = kzalloc(sizeof(*pkt), GFP_KERNEL);
 		if (!pkt)
 			return -ENOMEM;
 		if (copy_from_user(pkt, (void __user *)arg, sizeof(*pkt))) {
@@ -1120,7 +1120,7 @@ static long nvhdcp_dev_ioctl(struct file *filp,
 		return e;
 
 	case TEGRAIO_NVHDCP_READ_S:
-		pkt = kmalloc(sizeof(*pkt), GFP_KERNEL);
+		pkt = kzalloc(sizeof(*pkt), GFP_KERNEL);
 		if (!pkt)
 			return -ENOMEM;
 		if (copy_from_user(pkt, (void __user *)arg, sizeof(*pkt))) {

@@ -314,7 +314,7 @@ int nvhost_intr_add_action(struct nvhost_intr *intr, u32 id, u32 thresh,
 	int err;
 
 	/* create and initialize a new waiter */
-	waiter = kmalloc(sizeof(*waiter), GFP_KERNEL);
+	waiter = kzalloc(sizeof(*waiter), GFP_KERNEL);
 	if (!waiter)
 		return -ENOMEM;
 	INIT_LIST_HEAD(&waiter->list);
