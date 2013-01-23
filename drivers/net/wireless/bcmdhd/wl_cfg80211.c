@@ -190,11 +190,7 @@ static s32 wl_cfg80211_config_default_mgmt_key(struct wiphy *wiphy,
 static s32 wl_cfg80211_resume(struct wiphy *wiphy);
 static s32 wl_cfg80211_mgmt_tx_cancel_wait(struct wiphy *wiphy,
 	struct net_device *dev, u64 cookie);
-#if LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 39)
 static s32 wl_cfg80211_suspend(struct wiphy *wiphy, struct cfg80211_wowlan *wow);
-#else
-static s32 wl_cfg80211_suspend(struct wiphy *wiphy);
-#endif
 static s32 wl_cfg80211_set_pmksa(struct wiphy *wiphy, struct net_device *dev,
 	struct cfg80211_pmksa *pmksa);
 static s32 wl_cfg80211_del_pmksa(struct wiphy *wiphy, struct net_device *dev,
@@ -3160,11 +3156,7 @@ static s32 wl_cfg80211_resume(struct wiphy *wiphy)
 	return err;
 }
 
-#if LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 39)
 static s32 wl_cfg80211_suspend(struct wiphy *wiphy, struct cfg80211_wowlan *wow)
-#else
-static s32 wl_cfg80211_suspend(struct wiphy *wiphy)
-#endif
 {
 #ifdef DHD_CLEAR_ON_SUSPEND
 	struct wl_priv *wl = wiphy_priv(wiphy);
@@ -4668,9 +4660,6 @@ static s32 wl_setup_wiphy(struct wireless_dev *wdev, struct device *sdiofunc_dev
 #endif				/* !WL_POWERSAVE_DISABLED */
 	wdev->wiphy->flags |= WIPHY_FLAG_NETNS_OK |
 		WIPHY_FLAG_4ADDR_AP |
-#if LINUX_VERSION_CODE <= KERNEL_VERSION(2, 6, 39)
-		WIPHY_FLAG_SUPPORTS_SEPARATE_DEFAULT_KEYS |
-#endif
 		WIPHY_FLAG_4ADDR_STATION;
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 2, 0)
 	/* wdev->wiphy->flags |= WIPHY_FLAG_SUPPORTS_FW_ROAM; */
@@ -5434,9 +5423,7 @@ wl_bss_roaming_done(struct wl_priv *wl, struct net_device *ndev,
 	wl_update_bss_info(wl, ndev);
 	wl_update_pmklist(ndev, wl->pmk_list, err);
 	cfg80211_roamed(ndev,
-#if LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 39)
 		NULL,
-#endif
 		curbssid,
 		conn_info->req_ie, conn_info->req_ie_len,
 		conn_info->resp_ie, conn_info->resp_ie_len, GFP_KERNEL);
